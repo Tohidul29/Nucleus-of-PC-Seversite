@@ -35,11 +35,21 @@ async function run(){
             res.send(tool);
         });
 
+        //for submit users purchase product:
         app.post('/purchase', async(req, res)=>{
             const purchase = req.body;
             const output = await purchaseCollection.insertOne(purchase);
             res.send(output);
         })
+
+        //get users product details:
+        app.get('/purchase', async(req, res) =>{
+            const email = req.query.buyerEmail;
+            const query = {buyerEmail: email};
+            const purchase = await purchaseCollection.find(query).toArray();
+            res.send(purchase);
+        })
+
     }
     finally{
 
