@@ -17,6 +17,7 @@ async function run(){
     try{
         await client.connect();
         const toolsCollection = client.db('Nucleus_of_PC').collection('tools');
+        const purchaseCollection = client.db('Nucleus_of_PC').collection('purchase');
 
         //get all tools:
         app.get('/tools', async(req, res)=>{
@@ -32,6 +33,12 @@ async function run(){
             const query = {_id: ObjectId(id)};
             const tool = await toolsCollection.findOne(query);
             res.send(tool);
+        });
+
+        app.post('/purchase', async(req, res)=>{
+            const purchase = req.body;
+            const output = await purchaseCollection.insertOne(purchase);
+            res.send(output);
         })
     }
     finally{
