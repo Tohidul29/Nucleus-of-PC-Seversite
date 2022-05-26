@@ -13,15 +13,15 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@clu
 
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
-function verifyJWT(req, res, next){
+function verifyJWT(req, res, next) {
     const authHeader = req.headers.authorization;
-    if(!authHeader){
-        return res.status(401).send({message: 'Unauthorized access'});
+    if (!authHeader) {
+        return res.status(401).send({ message: 'Unauthorized access' });
     }
     const token = authHeader.split(' ')[1];
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function(err, decoded){
-        if(err){
-            return res.status(403).send({message: 'Forbidden Access'})
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+        if (err) {
+            return res.status(403).send({ message: 'Forbidden Access' })
         }
         req.decoded = decoded;
         next();
@@ -44,9 +44,16 @@ async function run() {
             res.send(tools);
         })
 
-        app.get('/user', async(req,res)=>{
+        app.get('/user', verifyJWT, async (req, res) => {
             const user = await userCollection.find().toArray();
             res.send(user);
+        })
+
+        app.get('/admin/:email', async(req, res)=>{
+            const email = req.params.email;
+            const user = await userCollection.findOne({email: email});
+            const isAdmin = user.role === 'admin';
+            res.send({admin: isAdmin});
         })
 
         app.put('/user/:email', async (req, res) => {
@@ -58,8 +65,25 @@ async function run() {
                 $set: user,
             };
             const result = await userCollection.updateOne(filter, updateDoc, options);
-            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '2h'})
-            res.send({result, token});
+            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '2h' })
+            res.send({ result, token });
+        })
+
+        app.put('/user/admin/:email', verifyJWT, async (req, res) => {
+            const email = req.params.email;
+            const requesterUser = req.decoded.email;
+            const requesterUserAccount = await userCollection.findOne({ email: requesterUser });
+            if (requesterUserAccount.role === 'admin') {
+                const filter = { email: email };
+                const updateDoc = {
+                    $set: { role: 'admin' },
+                };
+                const result = await userCollection.updateOne(filter, updateDoc);
+                res.send(result);
+            }
+            else{
+                res.status(403).send({message: 'forbidden access'});
+            }
         })
 
         // load single tool
@@ -81,13 +105,13 @@ async function run() {
         app.get('/purchase', verifyJWT, async (req, res) => {
             const email = req.query.buyerEmail;
             const decodedEmail = req.decoded.email;
-            if(email === decodedEmail){
+            if (email === decodedEmail) {
                 const query = { buyerEmail: email };
                 const order = await purchaseCollection.find(query).toArray();
                 return res.send(order);
             }
-            else{
-                return res.status(403).send({message: 'Forbidden Access'});
+            else {
+                return res.status(403).send({ message: 'Forbidden Access' });
             }
         })
 
