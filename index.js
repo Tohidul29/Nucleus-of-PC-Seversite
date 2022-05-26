@@ -35,6 +35,7 @@ async function run() {
         const toolsCollection = client.db('Nucleus_of_PC').collection('tools');
         const purchaseCollection = client.db('Nucleus_of_PC').collection('purchase');
         const userCollection = client.db('Nucleus_of_PC').collection('users');
+        const userReview = client.db('Nucleus_of_PC').collection('reviews');
 
         //get all tools:
         app.get('/tools', async (req, res) => {
@@ -42,6 +43,25 @@ async function run() {
             const cursor = toolsCollection.find(query);
             const tools = await cursor.toArray();
             res.send(tools);
+        })
+
+        app.get('/reviews', async (req, res) => {
+            const query = {};
+            const cursor = userReview.find(query);
+            const reviews = await cursor.toArray();
+            res.send(reviews);
+        })
+
+        app.post('/tools', async (req, res) => {
+            const purchase = req.body;
+            const output = await toolsCollection.insertOne(purchase);
+            res.send(output);
+        })
+
+        app.post('/reviews', async (req, res) => {
+            const review = req.body;
+            const result = await userReview.insertOne(review);
+            res.send(result);
         })
 
         app.get('/user', verifyJWT, async (req, res) => {
