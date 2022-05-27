@@ -45,6 +45,28 @@ async function run() {
             res.send(tools);
         })
 
+        //delete a single tool from collection:
+        app.delete('/tools/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await toolsCollection.deleteOne(query);
+            res.send(result);
+        })
+
+        //update a product stock
+        app.put('/tools/:id', async (req, res) => {
+            const id = req.params.id;
+            const updatedItem = req.body;
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updatedDoc = {
+                $set: updatedItem
+            };
+            const result = await toolsCollection.updateOne(filter, updatedDoc, options);
+            res.send(result);
+        })
+
+        //get user reviews from DB:
         app.get('/reviews', async (req, res) => {
             const query = {};
             const cursor = userReview.find(query);
@@ -64,16 +86,18 @@ async function run() {
             res.send(result);
         })
 
+        //get user from DB:
         app.get('/user', verifyJWT, async (req, res) => {
             const user = await userCollection.find().toArray();
             res.send(user);
         })
 
-        app.get('/admin/:email', async(req, res)=>{
+        //get admin from DB query via email and role:
+        app.get('/admin/:email', async (req, res) => {
             const email = req.params.email;
-            const user = await userCollection.findOne({email: email});
+            const user = await userCollection.findOne({ email: email });
             const isAdmin = user.role === 'admin';
-            res.send({admin: isAdmin});
+            res.send({ admin: isAdmin });
         })
 
         app.put('/user/:email', async (req, res) => {
@@ -101,8 +125,8 @@ async function run() {
                 const result = await userCollection.updateOne(filter, updateDoc);
                 res.send(result);
             }
-            else{
-                res.status(403).send({message: 'forbidden access'});
+            else {
+                res.status(403).send({ message: 'forbidden access' });
             }
         })
 
