@@ -37,6 +37,7 @@ async function run() {
         const purchaseCollection = client.db('Nucleus_of_PC').collection('purchase');
         const userCollection = client.db('Nucleus_of_PC').collection('users');
         const userReview = client.db('Nucleus_of_PC').collection('reviews');
+        const paymentCollection = client.db('Nucleus_of_PC').collection('payments');
 
         //get all tools:
         app.get('/tools', async (req, res) => {
@@ -177,6 +178,21 @@ async function run() {
             const query = { _id: ObjectId(id) };
             const purchase = await purchaseCollection.findOne(query);
             res.send(purchase);
+        })
+
+        app.patch('/purchase/:id', verifyJWT, async(req, res)=>{
+            const id = req.params.id;
+            const payment = req.body;
+            const filter = {_id: ObjectId(id)};
+            const updatedDoc ={
+                $set: {
+                    paid: true,
+                    transectionId: payment.transectionId
+                }
+            }
+            const result = await paymentCollection.insertOne(payment);
+            const updatedPurchase = await purchaseCollection.updateOne(filter, updatedDoc);
+            res.send(updatedDoc);
         })
 
     }
