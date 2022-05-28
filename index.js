@@ -47,6 +47,13 @@ async function run() {
             res.send(tools);
         })
 
+        app.get('/bookings', async (req, res) => {
+            const query = {};
+            const cursor = purchaseCollection.find(query);
+            const result = await cursor.toArray();
+            res.send(result);
+        });
+
         //delete a single tool from collection:
         app.delete('/tools/:id', async (req, res) => {
             const id = req.params.id;
@@ -180,11 +187,11 @@ async function run() {
             res.send(purchase);
         })
 
-        app.patch('/purchase/:id', verifyJWT, async(req, res)=>{
+        app.patch('/purchase/:id', verifyJWT, async (req, res) => {
             const id = req.params.id;
             const payment = req.body;
-            const filter = {_id: ObjectId(id)};
-            const updatedDoc ={
+            const filter = { _id: ObjectId(id) };
+            const updatedDoc = {
                 $set: {
                     paid: true,
                     transectionId: payment.transectionId
